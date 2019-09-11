@@ -2,9 +2,10 @@
 
 import numpy as np
 import torch
-import shared as sh
 
 from matplotlib import pyplot as plt
+
+import shared as sh
 
 vb = True # Verbose.
 
@@ -17,14 +18,15 @@ def generate_bounded_function(start_range, end_range, func):
     return x,  y
 
 class SimpleNet(torch.nn.Module):
+    """From PyTorch docs"""
     def __init__(self, D_in, H, D_out):
         """
         In the constructor we instantiate two nn.Linear modules and assign them as
-        member variables.
+        member variables. We also implement a tanh activation function.
         """
         super(SimpleNet, self).__init__()
         self.linear1 = torch.nn.Linear(D_in, H)
-        self.activation = torch.nn.Tanh()
+        self.activation = torch.nn.Tanh() # The only nonlinearity will be because of tanh activation on the first layer.
         self.linear2 = torch.nn.Linear(H, D_out)
 
     def forward(self, x):
@@ -34,7 +36,7 @@ class SimpleNet(torch.nn.Module):
         well as arbitrary operators on Tensors.
         """
         h_tanh = self.activation(self.linear1(x))
-        y_pred = self.linear2(h_tanh)
+        y_pred = self.linear2(h_tanh) 
         return y_pred
 
 # Generate
@@ -54,12 +56,14 @@ model = SimpleNet(D_in, H, D_out)
 criterion = torch.nn.MSELoss(reduction='sum')
 optimizer = torch.optim.SGD(model.parameters(), lr=1e-4)
 
+y_untrained = model(x.float())
+
 for t in range(max_episode):
     # Forward pass: Compute predicted y by passing x to the model
-    y_pred = model(x.float())
+    y_pred = model(x.float()) # Cast x to float tensor for PyTorch.
 
     # Compute and print loss
-    loss = criterion(y_pred, y.float())
+    loss = criterion(y_pred, y.float()) # Cast y to floats for PyTorch.
     if t % 100 == 99:
         print(t, loss.item())
         if loss.item() < target_epsilon: break
@@ -69,17 +73,28 @@ for t in range(max_episode):
     loss.backward()
     optimizer.step()
 
-y, y_pred = map(lambda var: var.detach().numpy(), [y, y_pred])
+y, y_pred = map(lambda var: var.detach().numpy(), [y, y_pred]) # Detach from gradients.
 print(y)
 
 print('Sanity check: ')
-print(np.corrcoef(y, y_pred)[0,1])
+print(np.corrcoef(y, y_pred)[0,1]) # Check that the network is well trained.
 print('Correlation coefficient should be close to 1.')
 
-ground, pred = map(lambda tup: list(zip(tup[0].tolist(), tup[1].tolist())), [(x, y), (x, y_pred)])
+# Map a function to be able to plot the respective graphs.
+ground, pred, untrained = map(lambda tup: list(zip(tup[0].tolist(), tup[1].tolist())), [(x, y), (x, y_pred), (x, y_untrained)])
 if vb: print(ground, '\n', pred)
 
-sh.visualize_2d_scatter_plot(ground, 4, False, 0.5)
-sh.visualize_2d_scatter_plot(pred, 4, False, 0.5)
+ground_p = sh.visualize_2d_scatter_plot(ground, 4, False, 0.7, 'Ground', 'red')
+pred_p = sh.visualize_2d_scatter_plot(pred, 4, False, 0.2, 'Prediction', 'blue')
+untrained_p = sh.visualize_2d_scatter_plot(untrained, 4, False, 1.0, 'Untrained', 'green')
 
+plt.legend((ground_p, pred_p, untrained_p),
+           ('Ground', 'Prediction', 'Untrained'),
+           scatterpoints=8,
+           loc='upper left',
+           ncol=3,
+           fontsize=10)
+plt.title("Ground Truth, Trained Network Prediction, & Untrained Predictions (of y=cos(x))")
+plt.xlabel("x")
+plt.ylabel("y")
 plt.show()
