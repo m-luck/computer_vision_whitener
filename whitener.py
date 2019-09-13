@@ -40,18 +40,16 @@ def decorrelate_covariance(xs, ys):
 def normalize_to_gaussian(decorr_matrix, singular):
 	whitened = decorr_matrix / np.sqrt(singular + 1e-5) # Just in case singular is zero, add a corrector.
 
+	print('Sanity check: \nVariances should be close to 1.0 --')
+	print(np.var(whitened, axis=0))
+	print(np.var(whitened))
+
 	return whitened 
 
 def render(zoom):
 	if plot_:
 		plt.axis([-zoom, zoom, -zoom, zoom], aspect='scaled') # Sets same limits in plots for better comparison.
 		plt.show()
-
-def discuss_dependencies():
-	pass
-
-def fit_func_w_NN():
-	pass
 
 if __name__ == "__main__":
 	def main_whiten():
@@ -73,11 +71,11 @@ if __name__ == "__main__":
 		plt.ylabel("y")
 		if plot_: render(zoom)
 
-	main_whiten()
+	main_whiten(
 
 # Dependencies:
 
 # Although we decorrelated the data, a lack of correlation does not necessarily imply independence. 
 # When we plot the data, we see a x-y dependency in the rough form of x^2 + y^2 = c, where c is a constant, a circle.
 # So the data does have dependencies.  
-# Whitening uses SVD to intentionally make variance = 1.
+# Whitening uses the SVD to transform the variance = 1 on the dimensions.
