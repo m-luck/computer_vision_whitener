@@ -80,3 +80,4 @@ if __name__ == "__main__":
 # Although we decorrelated the data, a lack of correlation does not necessarily imply independence. 
 # When we plot the data, we see a x-y dependency in the rough form of x^2 + y^2 = c, where c is a constant, a circle.
 # So the data does have dependencies.  
+# Whitening uses SVD to intentionally make variance = 1.
